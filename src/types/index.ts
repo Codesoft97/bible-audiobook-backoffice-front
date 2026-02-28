@@ -55,6 +55,28 @@ export interface AudiobookResponse {
   };
 }
 
+// Character Journey types
+export interface CharacterJourney {
+  id: string;
+  titulo: string;
+  categoria: string;
+  perfilAlvo: string;
+  duracaoEstimadaMinutos: number;
+  audioUrl: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CharacterJourneyResponse {
+  status: string;
+  data: CharacterJourney;
+}
+
+export interface CharacterJourneysResponse {
+  status: string;
+  data: CharacterJourney[];
+}
+
 // API Error types
 export interface ApiValidationError {
   field: string;
