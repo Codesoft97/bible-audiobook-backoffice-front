@@ -2,8 +2,9 @@
 
 import { useState, useEffect, use } from 'react';
 import api from '@/lib/api';
-import { BibleBook, BibleBooksResponse, AudiobookResponse, ApiErrorResponse } from '@/types';
+import { BibleBook, BibleBooksResponse, AudiobookGenerateResponse, Audiobook, AudiobooksResponse, ApiErrorResponse } from '@/types';
 import LoadingSpinner from '@/components/loading-spinner';
+import AudioPlayer from '@/components/audio-player';
 import { showToast } from '@/components/toast';
 import Link from 'next/link';
 import { AxiosError } from 'axios';
@@ -11,27 +12,39 @@ import { AxiosError } from 'axios';
 export default function BookDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const [book, setBook] = useState<BibleBook | null>(null);
+  const [audiobooks, setAudiobooks] = useState<Audiobook[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    const fetchBook = async () => {
-      try {
-        const response = await api.get<BibleBooksResponse>('/api/bible-books');
-        const foundBook = response.data.data.find((b) => b.id === id);
-        if (foundBook) {
-          setBook(foundBook);
-        } else {
-          setError('Livro não encontrado.');
-        }
-      } catch {
-        setError('Erro ao carregar o livro. Tente novamente.');
-      } finally {
-        setIsLoading(false);
+  const fetchData = async () => {
+    try {
+      const [booksRes, audiobooksRes] = await Promise.all([
+        api.get<BibleBooksResponse>('/api/bible-books'),
+        api.get<AudiobooksResponse>('/api/audiobooks'),
+      ]);
+
+      const foundBook = booksRes.data.data.find((b) => b.id === id);
+      if (foundBook) {
+        setBook(foundBook);
+        // Filter audiobooks for this book and sort by chapter
+        const bookAudiobooks = audiobooksRes.data.data
+          .filter((a) => a.book === foundBook.abbrev)
+          .sort((a, b) => a.chapter - b.chapter);
+        setAudiobooks(bookAudiobooks);
+      } else {
+        setError('Livro não encontrado.');
       }
-    };
-    fetchBook();
+    } catch {
+      setError('Erro ao carregar o livro. Tente novamente.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   const handleGenerate = async () => {
@@ -39,7 +52,7 @@ export default function BookDetailPage({ params }: { params: Promise<{ id: strin
 
     setIsGenerating(true);
     try {
-      await api.post<AudiobookResponse>('/api/audiobooks/generate', {
+      await api.post<AudiobookGenerateResponse>('/api/audiobooks/generate', {
         book: book.abbrev,
         chapter: book.nextChapter,
       });
@@ -49,12 +62,8 @@ export default function BookDetailPage({ params }: { params: Promise<{ id: strin
         'success'
       );
 
-      // Refresh book data
-      const response = await api.get<BibleBooksResponse>('/api/bible-books');
-      const updatedBook = response.data.data.find((b) => b.id === id);
-      if (updatedBook) {
-        setBook(updatedBook);
-      }
+      // Refresh all data
+      await fetchData();
     } catch (err) {
       const axiosError = err as AxiosError<ApiErrorResponse>;
       const message = axiosError.response?.data?.message || 'Erro ao gerar audiobook. Tente novamente.';
@@ -216,6 +225,38 @@ export default function BookDetailPage({ params }: { params: Promise<{ id: strin
           color="warning"
         />
       </div>
+
+      {/* Generated chapters */}
+      {audiobooks.length > 0 && (
+        <div className="rounded-2xl border border-border bg-card/50 p-6 mb-6">
+          <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+            <svg className="h-5 w-5 text-primary-light" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19.114 5.636a9 9 0 010 12.728M16.463 8.288a5.25 5.25 0 010 7.424M6.75 8.25l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z" />
+            </svg>
+            Capítulos Gerados
+          </h2>
+          <div className="space-y-3">
+            {audiobooks.map((audiobook) => (
+              <div
+                key={audiobook.id}
+                className="rounded-xl border border-border bg-background/30 p-4"
+              >
+                <div className="flex items-center gap-3 mb-2">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary-light text-sm font-bold">
+                    {audiobook.chapter}
+                  </span>
+                  <span className="text-sm font-medium text-foreground">
+                    Capítulo {audiobook.chapter}
+                  </span>
+                </div>
+                <AudioPlayer
+                  streamEndpoint={`/api/audiobooks/${audiobook.id}/stream`}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Generate button */}
       <div className="rounded-2xl border border-border bg-card/50 p-6">
