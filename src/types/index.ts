@@ -43,7 +43,7 @@ export interface BibleBooksResponse {
 }
 
 // Audiobook types
-export interface AudiobookResponse {
+export interface AudiobookGenerateResponse {
   status: string;
   data: {
     id: string;
@@ -52,6 +52,19 @@ export interface AudiobookResponse {
     createdAt: string;
     updatedAt: string;
   };
+}
+
+export interface Audiobook {
+  id: string;
+  book: string;
+  chapter: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AudiobooksResponse {
+  status: string;
+  data: Audiobook[];
 }
 
 // Character Journey types
