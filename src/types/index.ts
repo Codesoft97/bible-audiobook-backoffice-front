@@ -49,7 +49,6 @@ export interface AudiobookResponse {
     id: string;
     book: string;
     chapter: number;
-    audioUrl: string;
     createdAt: string;
     updatedAt: string;
   };
@@ -62,9 +61,16 @@ export interface CharacterJourney {
   categoria: string;
   perfilAlvo: string;
   duracaoEstimadaMinutos: number;
-  audioUrl: string;
   createdAt: string;
   updatedAt: string;
+}
+
+// Stream types
+export interface StreamResponse {
+  status: string;
+  data: {
+    audioUrl: string;
+  };
 }
 
 export interface CharacterJourneyResponse {

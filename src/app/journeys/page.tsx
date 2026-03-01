@@ -187,11 +187,9 @@ function JourneyCard({ journey }: { journey: CharacterJourney }) {
       </div>
 
       {/* Audio player */}
-      {journey.audioUrl && (
-        <div className="mt-3 pt-3 border-t border-border">
-          <AudioPlayer src={journey.audioUrl} />
-        </div>
-      )}
+      <div className="mt-3 pt-3 border-t border-border">
+        <AudioPlayer streamEndpoint={`/api/character-journeys/${journey.id}/stream`} />
+      </div>
     </div>
   );
 }

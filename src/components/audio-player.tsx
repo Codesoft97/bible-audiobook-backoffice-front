@@ -1,31 +1,26 @@
 'use client';
 
-import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
+import api from '@/lib/api';
+import { StreamResponse } from '@/types';
 
 interface AudioPlayerProps {
-  src: string;
+  streamEndpoint: string;
   title?: string;
 }
 
-export default function AudioPlayer({ src, title }: AudioPlayerProps) {
+export default function AudioPlayer({ streamEndpoint, title }: AudioPlayerProps) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const progressRef = useRef<HTMLDivElement>(null);
 
-  // Proxy external URLs through our API route to avoid R2 CORS/auth issues
-  const proxiedSrc = useMemo(() => {
-    if (src.startsWith('/') || src.startsWith(window.location.origin)) {
-      return src;
-    }
-    return `/api/audio-proxy?url=${encodeURIComponent(src)}`;
-  }, [src]);
-
+  const [audioSrc, setAudioSrc] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [volume, setVolume] = useState(1);
   const [isMuted, setIsMuted] = useState(false);
-  const [error, setError] = useState(false);
+  const [error, setError] = useState('');
 
   const formatTime = (time: number) => {
     if (!isFinite(time) || isNaN(time)) return '0:00';
@@ -49,7 +44,7 @@ export default function AudioPlayer({ src, title }: AudioPlayerProps) {
     const onWaiting = () => setIsLoading(true);
     const onCanPlay = () => setIsLoading(false);
     const onError = () => {
-      setError(true);
+      setError('Erro ao carregar o áudio');
       setIsPlaying(false);
       setIsLoading(false);
     };
@@ -71,6 +66,16 @@ export default function AudioPlayer({ src, title }: AudioPlayerProps) {
     };
   }, []);
 
+  const fetchStreamUrl = useCallback(async (): Promise<string | null> => {
+    try {
+      const response = await api.get<StreamResponse>(streamEndpoint);
+      return response.data.data.audioUrl;
+    } catch {
+      setError('Erro ao obter URL do áudio');
+      return null;
+    }
+  }, [streamEndpoint]);
+
   const togglePlay = useCallback(async () => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -78,19 +83,45 @@ export default function AudioPlayer({ src, title }: AudioPlayerProps) {
     if (isPlaying) {
       audio.pause();
       setIsPlaying(false);
-    } else {
-      setIsLoading(true);
-      setError(false);
-      try {
-        await audio.play();
-        setIsPlaying(true);
-      } catch {
-        setError(true);
-      } finally {
-        setIsLoading(false);
-      }
+      return;
     }
-  }, [isPlaying]);
+
+    setIsLoading(true);
+    setError('');
+
+    try {
+      // Fetch pre-signed URL if we don't have one yet or if it might have expired
+      if (!audioSrc) {
+        const url = await fetchStreamUrl();
+        if (!url) {
+          setIsLoading(false);
+          return;
+        }
+        setAudioSrc(url);
+        audio.src = url;
+        audio.load();
+      }
+
+      await audio.play();
+      setIsPlaying(true);
+    } catch {
+      // If play fails, the URL might have expired — refetch
+      const url = await fetchStreamUrl();
+      if (url) {
+        setAudioSrc(url);
+        audio.src = url;
+        audio.load();
+        try {
+          await audio.play();
+          setIsPlaying(true);
+        } catch {
+          setError('Erro ao reproduzir o áudio');
+        }
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  }, [isPlaying, audioSrc, fetchStreamUrl]);
 
   const handleProgressClick = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
@@ -147,10 +178,11 @@ export default function AudioPlayer({ src, title }: AudioPlayerProps) {
           <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
           </svg>
-          <span>Erro ao carregar o áudio</span>
+          <span>{error}</span>
           <button
             onClick={() => {
-              setError(false);
+              setError('');
+              setAudioSrc(null);
               togglePlay();
             }}
             className="ml-auto text-error hover:text-error/80 underline"
@@ -164,7 +196,7 @@ export default function AudioPlayer({ src, title }: AudioPlayerProps) {
 
   return (
     <div className="rounded-xl border border-border bg-background/50 px-4 py-3">
-      <audio ref={audioRef} src={proxiedSrc} preload="metadata" />
+      <audio ref={audioRef} preload="none" />
 
       {/* Title */}
       {title && (
