@@ -17,9 +17,10 @@ interface FieldError {
 const CATEGORIAS = [
   'Histórias de Pais da Bíblia',
   'Histórias de Mães da Bíblia',
+  'Jornadas de personagens bíblicos',
 ];
 
-const PERFIS_ALVO = ['Pai', 'Mãe', 'Filho', 'Filha'];
+const PERFIS_ALVO = ['Pai', 'Mãe', 'Filho', 'Filha', 'Família'];
 
 export default function NewJourneyPage() {
   const router = useRouter();
@@ -131,8 +132,8 @@ export default function NewJourneyPage() {
               value={titulo}
               onChange={(e) => setTitulo(e.target.value)}
               className={`w-full rounded-xl border bg-input-bg px-4 py-3 text-sm text-foreground placeholder-muted/50 transition-colors focus:outline-none ${getFieldError('titulo')
-                  ? 'border-error focus:border-error'
-                  : 'border-input-border focus:border-input-focus'
+                ? 'border-error focus:border-error'
+                : 'border-input-border focus:border-input-focus'
                 }`}
               placeholder="Ex: A Jornada de Isaque: Fé, Submissão e Legado"
               disabled={isLoading}
@@ -153,8 +154,8 @@ export default function NewJourneyPage() {
                 value={categoria}
                 onChange={(e) => setCategoria(e.target.value)}
                 className={`w-full rounded-xl border bg-input-bg px-4 py-3 text-sm text-foreground transition-colors focus:outline-none appearance-none cursor-pointer ${getFieldError('categoria')
-                    ? 'border-error focus:border-error'
-                    : 'border-input-border focus:border-input-focus'
+                  ? 'border-error focus:border-error'
+                  : 'border-input-border focus:border-input-focus'
                   } ${!categoria ? 'text-muted/50' : ''}`}
                 disabled={isLoading}
               >
@@ -177,8 +178,8 @@ export default function NewJourneyPage() {
                 value={perfilAlvo}
                 onChange={(e) => setPerfilAlvo(e.target.value)}
                 className={`w-full rounded-xl border bg-input-bg px-4 py-3 text-sm text-foreground transition-colors focus:outline-none appearance-none cursor-pointer ${getFieldError('perfil_alvo')
-                    ? 'border-error focus:border-error'
-                    : 'border-input-border focus:border-input-focus'
+                  ? 'border-error focus:border-error'
+                  : 'border-input-border focus:border-input-focus'
                   } ${!perfilAlvo ? 'text-muted/50' : ''}`}
                 disabled={isLoading}
               >
@@ -205,8 +206,8 @@ export default function NewJourneyPage() {
               value={duracaoEstimada}
               onChange={(e) => setDuracaoEstimada(e.target.value)}
               className={`w-full rounded-xl border bg-input-bg px-4 py-3 text-sm text-foreground placeholder-muted/50 transition-colors focus:outline-none ${getFieldError('duracao_estimada_minutos')
-                  ? 'border-error focus:border-error'
-                  : 'border-input-border focus:border-input-focus'
+                ? 'border-error focus:border-error'
+                : 'border-input-border focus:border-input-focus'
                 }`}
               placeholder="Ex: 4"
               disabled={isLoading}
@@ -227,8 +228,8 @@ export default function NewJourneyPage() {
               value={conteudo}
               onChange={(e) => setConteudo(e.target.value)}
               className={`w-full rounded-xl border bg-input-bg px-4 py-3 text-sm text-foreground placeholder-muted/50 transition-colors focus:outline-none resize-y ${getFieldError('segmentos_de_texto')
-                  ? 'border-error focus:border-error'
-                  : 'border-input-border focus:border-input-focus'
+                ? 'border-error focus:border-error'
+                : 'border-input-border focus:border-input-focus'
                 }`}
               placeholder="Escreva o texto da história. Separe os segmentos com uma linha em branco entre eles.
 
