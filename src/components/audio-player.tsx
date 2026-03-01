@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 
 interface AudioPlayerProps {
   src: string;
@@ -10,6 +10,14 @@ interface AudioPlayerProps {
 export default function AudioPlayer({ src, title }: AudioPlayerProps) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const progressRef = useRef<HTMLDivElement>(null);
+
+  // Proxy external URLs through our API route to avoid R2 CORS/auth issues
+  const proxiedSrc = useMemo(() => {
+    if (src.startsWith('/') || src.startsWith(window.location.origin)) {
+      return src;
+    }
+    return `/api/audio-proxy?url=${encodeURIComponent(src)}`;
+  }, [src]);
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -156,7 +164,7 @@ export default function AudioPlayer({ src, title }: AudioPlayerProps) {
 
   return (
     <div className="rounded-xl border border-border bg-background/50 px-4 py-3">
-      <audio ref={audioRef} src={src} preload="metadata" />
+      <audio ref={audioRef} src={proxiedSrc} preload="metadata" />
 
       {/* Title */}
       {title && (
