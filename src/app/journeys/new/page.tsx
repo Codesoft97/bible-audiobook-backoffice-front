@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, FormEvent } from 'react';
+import { useState, useEffect, FormEvent } from 'react';
 import api from '@/lib/api';
-import { CharacterJourneyResponse, ApiErrorResponse } from '@/types';
+import { CharacterJourneyResponse, ApiErrorResponse, Voice, VoicesResponse } from '@/types';
 import LoadingSpinner from '@/components/loading-spinner';
 import { showToast } from '@/components/toast';
 import Link from 'next/link';
@@ -30,9 +30,23 @@ export default function NewJourneyPage() {
   const [perfilAlvo, setPerfilAlvo] = useState('');
   const [duracaoEstimada, setDuracaoEstimada] = useState('');
   const [conteudo, setConteudo] = useState('');
+  const [selectedVoiceId, setSelectedVoiceId] = useState('');
+  const [voices, setVoices] = useState<Voice[]>([]);
   const [error, setError] = useState('');
   const [fieldErrors, setFieldErrors] = useState<FieldError[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchVoices = async () => {
+      try {
+        const response = await api.get<VoicesResponse>('/api/voices');
+        setVoices(response.data.data);
+      } catch {
+        // silently fail — voices list will be empty
+      }
+    };
+    fetchVoices();
+  }, []);
 
   const getFieldError = (field: string) =>
     fieldErrors.find((e) => e.field === field)?.message;
@@ -49,6 +63,7 @@ export default function NewJourneyPage() {
     if (!perfilAlvo) errors.push({ field: 'perfil_alvo', message: 'Perfil alvo é obrigatório' });
     if (!duracaoEstimada || Number(duracaoEstimada) <= 0) errors.push({ field: 'duracao_estimada_minutos', message: 'Duração deve ser maior que 0' });
     if (!conteudo.trim()) errors.push({ field: 'segmentos_de_texto', message: 'Conteúdo é obrigatório' });
+    if (!selectedVoiceId) errors.push({ field: 'voice_id', message: 'Selecione uma voz' });
 
     if (errors.length > 0) {
       setFieldErrors(errors);
@@ -75,6 +90,7 @@ export default function NewJourneyPage() {
         perfil_alvo: perfilAlvo,
         duracao_estimada_minutos: Number(duracaoEstimada),
         segmentos_de_texto: segmentos,
+        voice_id: selectedVoiceId,
       });
 
       showToast('Jornada criada com sucesso!', 'success');
@@ -214,6 +230,36 @@ export default function NewJourneyPage() {
             />
             {getFieldError('duracao_estimada_minutos') && (
               <p className="mt-1 text-xs text-error">{getFieldError('duracao_estimada_minutos')}</p>
+            )}
+          </div>
+
+          {/* Voz */}
+          <div>
+            <label htmlFor="voice-select" className="block text-sm font-medium text-muted mb-1.5">
+              Voz para Geração
+            </label>
+            <select
+              id="voice-select"
+              value={selectedVoiceId}
+              onChange={(e) => setSelectedVoiceId(e.target.value)}
+              className={`w-full rounded-xl border bg-input-bg px-4 py-3 text-sm text-foreground transition-colors focus:outline-none appearance-none cursor-pointer ${getFieldError('voice_id')
+                ? 'border-error focus:border-error'
+                : 'border-input-border focus:border-input-focus'
+                } ${!selectedVoiceId ? 'text-muted/50' : ''}`}
+              disabled={isLoading}
+            >
+              <option value="" disabled>Selecione uma voz...</option>
+              {voices.map((voice) => (
+                <option key={voice.id} value={voice.externalId}>
+                  {voice.name} ({voice.language})
+                </option>
+              ))}
+            </select>
+            {getFieldError('voice_id') && (
+              <p className="mt-1 text-xs text-error">{getFieldError('voice_id')}</p>
+            )}
+            {voices.length === 0 && (
+              <p className="mt-1.5 text-xs text-warning">Nenhuma voz cadastrada. Cadastre uma voz primeiro.</p>
             )}
           </div>
 
