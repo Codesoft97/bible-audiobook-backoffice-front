@@ -13,6 +13,7 @@ export default function Header() {
   const navLinks = [
     { href: '/books', label: 'Livros' },
     { href: '/journeys', label: 'Jornadas' },
+    { href: '/voices', label: 'Vozes' },
   ];
 
   return (
@@ -50,8 +51,8 @@ export default function Header() {
                   key={link.href}
                   href={link.href}
                   className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive
-                      ? 'bg-primary/15 text-primary-light'
-                      : 'text-muted hover:bg-card-hover hover:text-foreground'
+                    ? 'bg-primary/15 text-primary-light'
+                    : 'text-muted hover:bg-card-hover hover:text-foreground'
                     }`}
                 >
                   {link.label}

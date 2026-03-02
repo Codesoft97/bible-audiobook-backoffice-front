@@ -58,6 +58,8 @@ export interface Audiobook {
   id: string;
   book: string;
   chapter: number;
+  coverImageUrl?: string;
+  isActive?: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -74,8 +76,19 @@ export interface CharacterJourney {
   categoria: string;
   perfilAlvo: string;
   duracaoEstimadaMinutos: number;
+  coverImageUrl?: string;
+  isActive?: boolean;
   createdAt: string;
   updatedAt: string;
+}
+
+// Toggle Active Response
+export interface ToggleActiveResponse {
+  status: string;
+  data: {
+    id: string;
+    isActive: boolean;
+  };
 }
 
 // Stream types
@@ -94,6 +107,26 @@ export interface CharacterJourneyResponse {
 export interface CharacterJourneysResponse {
   status: string;
   data: CharacterJourney[];
+}
+
+// Voice types
+export interface Voice {
+  id: string;
+  name: string;
+  language: string;
+  externalId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface VoicesResponse {
+  status: string;
+  data: Voice[];
+}
+
+export interface VoiceCreateResponse {
+  status: string;
+  data: Voice;
 }
 
 // API Error types
