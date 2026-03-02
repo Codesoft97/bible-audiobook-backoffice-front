@@ -2,16 +2,19 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import api from '@/lib/api';
-import { CharacterJourney, CharacterJourneysResponse } from '@/types';
+import { CharacterJourney, CharacterJourneysResponse, ToggleActiveResponse, ApiErrorResponse } from '@/types';
 import LoadingSpinner from '@/components/loading-spinner';
 import AudioPlayer from '@/components/audio-player';
+import { showToast } from '@/components/toast';
 import Link from 'next/link';
+import { AxiosError } from 'axios';
 
 export default function JourneysPage() {
   const [journeys, setJourneys] = useState<CharacterJourney[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
+  const [togglingIds, setTogglingIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const fetchJourneys = async () => {
@@ -37,6 +40,31 @@ export default function JourneysPage() {
         j.perfilAlvo.toLowerCase().includes(lowerSearch)
     );
   }, [journeys, search]);
+
+  const handleToggleActive = async (journeyId: string, currentActive: boolean) => {
+    setTogglingIds((prev) => new Set(prev).add(journeyId));
+    try {
+      await api.patch<ToggleActiveResponse>(`/api/character-journeys/${journeyId}/active`, {
+        is_active: !currentActive,
+      });
+      setJourneys((prev) =>
+        prev.map((j) => (j.id === journeyId ? { ...j, isActive: !currentActive } : j))
+      );
+      showToast(
+        `Jornada ${!currentActive ? 'ativada' : 'desativada'} com sucesso!`,
+        'success'
+      );
+    } catch (err) {
+      const axiosError = err as AxiosError<ApiErrorResponse>;
+      showToast(axiosError.response?.data?.message || 'Erro ao alterar status.', 'error');
+    } finally {
+      setTogglingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(journeyId);
+        return next;
+      });
+    }
+  };
 
   if (isLoading) {
     return (
@@ -142,7 +170,12 @@ export default function JourneysPage() {
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {filteredJourneys.map((journey) => (
-            <JourneyCard key={journey.id} journey={journey} />
+            <JourneyCard
+              key={journey.id}
+              journey={journey}
+              isToggling={togglingIds.has(journey.id)}
+              onToggleActive={() => handleToggleActive(journey.id, journey.isActive !== false)}
+            />
           ))}
         </div>
       )}
@@ -150,7 +183,7 @@ export default function JourneysPage() {
   );
 }
 
-function JourneyCard({ journey }: { journey: CharacterJourney }) {
+function JourneyCard({ journey, isToggling, onToggleActive }: { journey: CharacterJourney; isToggling: boolean; onToggleActive: () => void }) {
   const perfilColors: Record<string, string> = {
     Pai: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
     Mãe: 'bg-purple-500/10 text-purple-400 border-purple-500/20',
@@ -163,32 +196,63 @@ function JourneyCard({ journey }: { journey: CharacterJourney }) {
   return (
     <div
       id={`journey-${journey.id}`}
-      className="group rounded-2xl border border-border bg-card/50 p-5 transition-all duration-200 hover:border-primary/40 hover:bg-card-hover hover:shadow-lg hover:shadow-primary/5"
+      className={`group rounded-2xl border bg-card/50 overflow-hidden transition-all duration-200 hover:border-primary/40 hover:bg-card-hover hover:shadow-lg hover:shadow-primary/5 ${journey.isActive === false ? 'border-border/50 opacity-60' : 'border-border'}`}
     >
-      {/* Title */}
-      <h3 className="font-semibold text-foreground group-hover:text-primary-light transition-colors mb-2 line-clamp-2">
-        {journey.titulo}
-      </h3>
+      {/* Cover image */}
+      {journey.coverImageUrl && (
+        <div className="relative h-36 w-full overflow-hidden">
+          <img
+            src={journey.coverImageUrl}
+            alt={journey.titulo}
+            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-card/80 to-transparent" />
+        </div>
+      )}
 
-      {/* Category */}
-      <p className="text-xs text-muted mb-3 line-clamp-1">{journey.categoria}</p>
+      <div className="p-5">
+        {/* Title + Toggle */}
+        <div className="flex items-start justify-between gap-2 mb-2">
+          <h3 className="font-semibold text-foreground group-hover:text-primary-light transition-colors line-clamp-2">
+            {journey.titulo}
+          </h3>
+          <button
+            onClick={onToggleActive}
+            disabled={isToggling}
+            className={`shrink-0 relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none disabled:opacity-50 ${journey.isActive !== false ? 'bg-success' : 'bg-border'
+              }`}
+            title={journey.isActive !== false ? 'Desativar' : 'Ativar'}
+          >
+            <span
+              className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform ${journey.isActive !== false ? 'translate-x-6' : 'translate-x-1'
+                }`}
+            />
+          </button>
+        </div>
 
-      {/* Tags */}
-      <div className="flex items-center gap-2 flex-wrap mb-3">
-        <span className={`inline-flex items-center rounded-lg border px-2 py-1 text-xs font-medium ${perfilStyle}`}>
-          {journey.perfilAlvo}
-        </span>
-        <span className="inline-flex items-center gap-1 rounded-lg border border-border bg-card px-2 py-1 text-xs font-medium text-muted">
-          <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          {journey.duracaoEstimadaMinutos} min
-        </span>
-      </div>
+        {/* Category */}
+        <p className="text-xs text-muted mb-3 line-clamp-1">{journey.categoria}</p>
 
-      {/* Audio player */}
-      <div className="mt-3 pt-3 border-t border-border">
-        <AudioPlayer streamEndpoint={`/api/character-journeys/${journey.id}/stream`} />
+        {/* Tags */}
+        <div className="flex items-center gap-2 flex-wrap mb-3">
+          <span className={`inline-flex items-center rounded-lg border px-2 py-1 text-xs font-medium ${perfilStyle}`}>
+            {journey.perfilAlvo}
+          </span>
+          <span className={`inline-flex items-center rounded-md px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${journey.isActive !== false ? 'bg-success/10 text-success' : 'bg-muted/10 text-muted'}`}>
+            {journey.isActive !== false ? 'Ativo' : 'Inativo'}
+          </span>
+          <span className="inline-flex items-center gap-1 rounded-lg border border-border bg-card px-2 py-1 text-xs font-medium text-muted">
+            <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            {journey.duracaoEstimadaMinutos} min
+          </span>
+        </div>
+
+        {/* Audio player */}
+        <div className="mt-3 pt-3 border-t border-border">
+          <AudioPlayer streamEndpoint={`/api/character-journeys/${journey.id}/stream`} />
+        </div>
       </div>
     </div>
   );
