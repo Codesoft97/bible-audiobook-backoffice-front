@@ -59,6 +59,7 @@ export interface Audiobook {
   book: string;
   chapter: number;
   coverImageUrl?: string;
+  isActive?: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -76,8 +77,18 @@ export interface CharacterJourney {
   perfilAlvo: string;
   duracaoEstimadaMinutos: number;
   coverImageUrl?: string;
+  isActive?: boolean;
   createdAt: string;
   updatedAt: string;
+}
+
+// Toggle Active Response
+export interface ToggleActiveResponse {
+  status: string;
+  data: {
+    id: string;
+    isActive: boolean;
+  };
 }
 
 // Stream types

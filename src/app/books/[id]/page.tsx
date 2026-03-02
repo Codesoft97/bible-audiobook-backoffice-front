@@ -2,7 +2,7 @@
 
 import { useState, useEffect, use } from 'react';
 import api from '@/lib/api';
-import { BibleBook, BibleBooksResponse, AudiobookGenerateResponse, Audiobook, AudiobooksResponse, ApiErrorResponse, Voice, VoicesResponse } from '@/types';
+import { BibleBook, BibleBooksResponse, AudiobookGenerateResponse, Audiobook, AudiobooksResponse, ApiErrorResponse, Voice, VoicesResponse, ToggleActiveResponse } from '@/types';
 import LoadingSpinner from '@/components/loading-spinner';
 import AudioPlayer from '@/components/audio-player';
 import { showToast } from '@/components/toast';
@@ -19,6 +19,7 @@ export default function BookDetailPage({ params }: { params: Promise<{ id: strin
   const [coverPreview, setCoverPreview] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [togglingIds, setTogglingIds] = useState<Set<string>>(new Set());
   const [error, setError] = useState('');
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -94,6 +95,31 @@ export default function BookDetailPage({ params }: { params: Promise<{ id: strin
       showToast(message, 'error');
     } finally {
       setIsGenerating(false);
+    }
+  };
+
+  const handleToggleActive = async (audiobookId: string, currentActive: boolean) => {
+    setTogglingIds((prev) => new Set(prev).add(audiobookId));
+    try {
+      await api.patch<ToggleActiveResponse>(`/api/audiobooks/${audiobookId}/active`, {
+        is_active: !currentActive,
+      });
+      setAudiobooks((prev) =>
+        prev.map((a) => (a.id === audiobookId ? { ...a, isActive: !currentActive } : a))
+      );
+      showToast(
+        `Capítulo ${!currentActive ? 'ativado' : 'desativado'} com sucesso!`,
+        'success'
+      );
+    } catch (err) {
+      const axiosError = err as AxiosError<ApiErrorResponse>;
+      showToast(axiosError.response?.data?.message || 'Erro ao alterar status.', 'error');
+    } finally {
+      setTogglingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(audiobookId);
+        return next;
+      });
     }
   };
 
@@ -263,23 +289,42 @@ export default function BookDetailPage({ params }: { params: Promise<{ id: strin
             {audiobooks.map((audiobook) => (
               <div
                 key={audiobook.id}
-                className="rounded-xl border border-border bg-background/30 p-4"
+                className={`rounded-xl border bg-background/30 p-4 ${audiobook.isActive === false ? 'border-border/50 opacity-60' : 'border-border'}`}
               >
-                <div className="flex items-center gap-3 mb-2">
-                  {audiobook.coverImageUrl ? (
-                    <img
-                      src={audiobook.coverImageUrl}
-                      alt={`Capa capítulo ${audiobook.chapter}`}
-                      className="h-12 w-12 shrink-0 rounded-lg object-cover border border-border"
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-3">
+                    {audiobook.coverImageUrl ? (
+                      <img
+                        src={audiobook.coverImageUrl}
+                        alt={`Capa capítulo ${audiobook.chapter}`}
+                        className="h-12 w-12 shrink-0 rounded-lg object-cover border border-border"
+                      />
+                    ) : (
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary-light text-sm font-bold">
+                        {audiobook.chapter}
+                      </span>
+                    )}
+                    <div>
+                      <span className="text-sm font-medium text-foreground">
+                        Capítulo {audiobook.chapter}
+                      </span>
+                      <span className={`ml-2 inline-flex items-center rounded-md px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${audiobook.isActive !== false ? 'bg-success/10 text-success' : 'bg-muted/10 text-muted'}`}>
+                        {audiobook.isActive !== false ? 'Ativo' : 'Inativo'}
+                      </span>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => handleToggleActive(audiobook.id, audiobook.isActive !== false)}
+                    disabled={togglingIds.has(audiobook.id)}
+                    className={`shrink-0 relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none disabled:opacity-50 ${audiobook.isActive !== false ? 'bg-success' : 'bg-border'
+                      }`}
+                    title={audiobook.isActive !== false ? 'Desativar' : 'Ativar'}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform ${audiobook.isActive !== false ? 'translate-x-6' : 'translate-x-1'
+                        }`}
                     />
-                  ) : (
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary-light text-sm font-bold">
-                      {audiobook.chapter}
-                    </span>
-                  )}
-                  <span className="text-sm font-medium text-foreground">
-                    Capítulo {audiobook.chapter}
-                  </span>
+                  </button>
                 </div>
                 <AudioPlayer
                   streamEndpoint={`/api/audiobooks/${audiobook.id}/stream`}
