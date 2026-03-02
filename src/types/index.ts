@@ -96,6 +96,26 @@ export interface CharacterJourneysResponse {
   data: CharacterJourney[];
 }
 
+// Voice types
+export interface Voice {
+  id: string;
+  name: string;
+  language: string;
+  externalId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface VoicesResponse {
+  status: string;
+  data: Voice[];
+}
+
+export interface VoiceCreateResponse {
+  status: string;
+  data: Voice;
+}
+
 // API Error types
 export interface ApiValidationError {
   field: string;

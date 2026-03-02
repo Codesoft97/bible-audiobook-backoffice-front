@@ -2,7 +2,7 @@
 
 import { useState, useEffect, use } from 'react';
 import api from '@/lib/api';
-import { BibleBook, BibleBooksResponse, AudiobookGenerateResponse, Audiobook, AudiobooksResponse, ApiErrorResponse } from '@/types';
+import { BibleBook, BibleBooksResponse, AudiobookGenerateResponse, Audiobook, AudiobooksResponse, ApiErrorResponse, Voice, VoicesResponse } from '@/types';
 import LoadingSpinner from '@/components/loading-spinner';
 import AudioPlayer from '@/components/audio-player';
 import { showToast } from '@/components/toast';
@@ -13,16 +13,21 @@ export default function BookDetailPage({ params }: { params: Promise<{ id: strin
   const { id } = use(params);
   const [book, setBook] = useState<BibleBook | null>(null);
   const [audiobooks, setAudiobooks] = useState<Audiobook[]>([]);
+  const [voices, setVoices] = useState<Voice[]>([]);
+  const [selectedVoiceId, setSelectedVoiceId] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState('');
 
   const fetchData = async () => {
     try {
-      const [booksRes, audiobooksRes] = await Promise.all([
+      const [booksRes, audiobooksRes, voicesRes] = await Promise.all([
         api.get<BibleBooksResponse>('/api/bible-books'),
         api.get<AudiobooksResponse>('/api/audiobooks'),
+        api.get<VoicesResponse>('/api/voices'),
       ]);
+
+      setVoices(voicesRes.data.data);
 
       const foundBook = booksRes.data.data.find((b) => b.id === id);
       if (foundBook) {
@@ -49,12 +54,17 @@ export default function BookDetailPage({ params }: { params: Promise<{ id: strin
 
   const handleGenerate = async () => {
     if (!book || book.isCompleted) return;
+    if (!selectedVoiceId) {
+      showToast('Selecione uma voz para gerar o audiobook.', 'error');
+      return;
+    }
 
     setIsGenerating(true);
     try {
       await api.post<AudiobookGenerateResponse>('/api/audiobooks/generate', {
         book: book.abbrev,
         chapter: book.nextChapter,
+        voice_id: selectedVoiceId,
       });
 
       showToast(
@@ -140,8 +150,8 @@ export default function BookDetailPage({ params }: { params: Promise<{ id: strin
           {/* Status badge */}
           <span
             className={`inline-flex items-center gap-2 self-start rounded-xl px-4 py-2 text-sm font-semibold ${book.isCompleted
-                ? 'bg-success/10 border border-success/30 text-success'
-                : 'bg-primary/10 border border-primary/30 text-primary-light'
+              ? 'bg-success/10 border border-success/30 text-success'
+              : 'bg-primary/10 border border-primary/30 text-primary-light'
               }`}
           >
             {book.isCompleted ? (
@@ -171,8 +181,8 @@ export default function BookDetailPage({ params }: { params: Promise<{ id: strin
           <div className="h-3 w-full overflow-hidden rounded-full bg-border">
             <div
               className={`h-full rounded-full transition-all duration-700 ${book.isCompleted
-                  ? 'bg-gradient-to-r from-success to-green-400'
-                  : 'bg-gradient-to-r from-primary to-primary-light'
+                ? 'bg-gradient-to-r from-success to-green-400'
+                : 'bg-gradient-to-r from-primary to-primary-light'
                 }`}
               style={{ width: `${progress}%` }}
             />
@@ -282,10 +292,35 @@ export default function BookDetailPage({ params }: { params: Promise<{ id: strin
             <p className="text-sm text-muted mb-6">
               Capítulo {book.nextChapter} de {book.totalChapters} — {book.name}
             </p>
+
+            {/* Voice selector */}
+            <div className="max-w-xs mx-auto mb-6">
+              <label htmlFor="voice-select" className="block text-sm font-medium text-muted mb-1.5">
+                Voz para geração
+              </label>
+              <select
+                id="voice-select"
+                value={selectedVoiceId}
+                onChange={(e) => setSelectedVoiceId(e.target.value)}
+                className={`w-full rounded-xl border bg-input-bg px-4 py-3 text-sm text-foreground transition-colors focus:outline-none appearance-none cursor-pointer border-input-border focus:border-input-focus ${!selectedVoiceId ? 'text-muted/50' : ''}`}
+                disabled={isGenerating}
+              >
+                <option value="" disabled>Selecione uma voz...</option>
+                {voices.map((voice) => (
+                  <option key={voice.id} value={voice.externalId}>
+                    {voice.name} ({voice.language})
+                  </option>
+                ))}
+              </select>
+              {voices.length === 0 && (
+                <p className="mt-1.5 text-xs text-warning">Nenhuma voz cadastrada. Cadastre uma voz primeiro.</p>
+              )}
+            </div>
+
             <button
               id="generate-audiobook"
               onClick={handleGenerate}
-              disabled={isGenerating}
+              disabled={isGenerating || !selectedVoiceId}
               className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-primary to-accent px-8 py-3.5 text-sm font-semibold text-white shadow-lg shadow-primary/25 transition-all hover:shadow-primary/40 hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isGenerating ? (
