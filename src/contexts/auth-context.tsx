@@ -48,9 +48,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           email,
           password,
         });
-        const { user: userData } = response.data.data;
+        const { token, user: userData } = response.data.data;
         setUser(userData);
         localStorage.setItem('user', JSON.stringify(userData));
+
+        // Set token as cookie on the Next.js domain so the middleware can read it
+        await fetch('/api/auth/set-token', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token }),
+        });
+
         router.push('/books');
       } catch (error) {
         const axiosError = error as AxiosError<ApiErrorResponse>;
@@ -85,6 +93,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       setUser(null);
       localStorage.removeItem('user');
+
+      // Clear the token cookie on the Next.js domain
+      await fetch('/api/auth/clear-token', { method: 'POST' });
+
       router.push('/login');
     }
   }, [router]);

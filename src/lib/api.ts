@@ -12,7 +12,7 @@ const api = axios.create({
 
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error) => {
     if (
       error.response?.status === 401 &&
       typeof window !== 'undefined' &&
@@ -20,6 +20,8 @@ api.interceptors.response.use(
       !window.location.pathname.includes('/register')
     ) {
       localStorage.removeItem('user');
+      // Clear the token cookie on the Next.js domain
+      await fetch('/api/auth/clear-token', { method: 'POST' }).catch(() => { });
       window.location.href = '/login';
     }
     return Promise.reject(error);
