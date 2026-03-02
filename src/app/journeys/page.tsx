@@ -163,32 +163,46 @@ function JourneyCard({ journey }: { journey: CharacterJourney }) {
   return (
     <div
       id={`journey-${journey.id}`}
-      className="group rounded-2xl border border-border bg-card/50 p-5 transition-all duration-200 hover:border-primary/40 hover:bg-card-hover hover:shadow-lg hover:shadow-primary/5"
+      className="group rounded-2xl border border-border bg-card/50 overflow-hidden transition-all duration-200 hover:border-primary/40 hover:bg-card-hover hover:shadow-lg hover:shadow-primary/5"
     >
-      {/* Title */}
-      <h3 className="font-semibold text-foreground group-hover:text-primary-light transition-colors mb-2 line-clamp-2">
-        {journey.titulo}
-      </h3>
+      {/* Cover image */}
+      {journey.coverImageUrl && (
+        <div className="relative h-36 w-full overflow-hidden">
+          <img
+            src={journey.coverImageUrl}
+            alt={journey.titulo}
+            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-card/80 to-transparent" />
+        </div>
+      )}
 
-      {/* Category */}
-      <p className="text-xs text-muted mb-3 line-clamp-1">{journey.categoria}</p>
+      <div className="p-5">
+        {/* Title */}
+        <h3 className="font-semibold text-foreground group-hover:text-primary-light transition-colors mb-2 line-clamp-2">
+          {journey.titulo}
+        </h3>
 
-      {/* Tags */}
-      <div className="flex items-center gap-2 flex-wrap mb-3">
-        <span className={`inline-flex items-center rounded-lg border px-2 py-1 text-xs font-medium ${perfilStyle}`}>
-          {journey.perfilAlvo}
-        </span>
-        <span className="inline-flex items-center gap-1 rounded-lg border border-border bg-card px-2 py-1 text-xs font-medium text-muted">
-          <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          {journey.duracaoEstimadaMinutos} min
-        </span>
-      </div>
+        {/* Category */}
+        <p className="text-xs text-muted mb-3 line-clamp-1">{journey.categoria}</p>
 
-      {/* Audio player */}
-      <div className="mt-3 pt-3 border-t border-border">
-        <AudioPlayer streamEndpoint={`/api/character-journeys/${journey.id}/stream`} />
+        {/* Tags */}
+        <div className="flex items-center gap-2 flex-wrap mb-3">
+          <span className={`inline-flex items-center rounded-lg border px-2 py-1 text-xs font-medium ${perfilStyle}`}>
+            {journey.perfilAlvo}
+          </span>
+          <span className="inline-flex items-center gap-1 rounded-lg border border-border bg-card px-2 py-1 text-xs font-medium text-muted">
+            <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            {journey.duracaoEstimadaMinutos} min
+          </span>
+        </div>
+
+        {/* Audio player */}
+        <div className="mt-3 pt-3 border-t border-border">
+          <AudioPlayer streamEndpoint={`/api/character-journeys/${journey.id}/stream`} />
+        </div>
       </div>
     </div>
   );

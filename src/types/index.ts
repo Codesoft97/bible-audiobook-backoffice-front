@@ -58,6 +58,7 @@ export interface Audiobook {
   id: string;
   book: string;
   chapter: number;
+  coverImageUrl?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -74,6 +75,7 @@ export interface CharacterJourney {
   categoria: string;
   perfilAlvo: string;
   duracaoEstimadaMinutos: number;
+  coverImageUrl?: string;
   createdAt: string;
   updatedAt: string;
 }

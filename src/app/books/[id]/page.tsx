@@ -15,9 +15,22 @@ export default function BookDetailPage({ params }: { params: Promise<{ id: strin
   const [audiobooks, setAudiobooks] = useState<Audiobook[]>([]);
   const [voices, setVoices] = useState<Voice[]>([]);
   const [selectedVoiceId, setSelectedVoiceId] = useState('');
+  const [coverImage, setCoverImage] = useState('');
+  const [coverPreview, setCoverPreview] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState('');
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setCoverPreview(URL.createObjectURL(file));
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setCoverImage(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
 
   const fetchData = async () => {
     try {
@@ -65,6 +78,7 @@ export default function BookDetailPage({ params }: { params: Promise<{ id: strin
         book: book.abbrev,
         chapter: book.nextChapter,
         voice_id: selectedVoiceId,
+        ...(coverImage ? { cover_image: coverImage } : {}),
       });
 
       showToast(
@@ -252,9 +266,17 @@ export default function BookDetailPage({ params }: { params: Promise<{ id: strin
                 className="rounded-xl border border-border bg-background/30 p-4"
               >
                 <div className="flex items-center gap-3 mb-2">
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary-light text-sm font-bold">
-                    {audiobook.chapter}
-                  </span>
+                  {audiobook.coverImageUrl ? (
+                    <img
+                      src={audiobook.coverImageUrl}
+                      alt={`Capa capítulo ${audiobook.chapter}`}
+                      className="h-12 w-12 shrink-0 rounded-lg object-cover border border-border"
+                    />
+                  ) : (
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary-light text-sm font-bold">
+                      {audiobook.chapter}
+                    </span>
+                  )}
                   <span className="text-sm font-medium text-foreground">
                     Capítulo {audiobook.chapter}
                   </span>
@@ -314,6 +336,44 @@ export default function BookDetailPage({ params }: { params: Promise<{ id: strin
               </select>
               {voices.length === 0 && (
                 <p className="mt-1.5 text-xs text-warning">Nenhuma voz cadastrada. Cadastre uma voz primeiro.</p>
+              )}
+            </div>
+
+            {/* Cover image upload */}
+            <div className="max-w-xs mx-auto mb-6">
+              <label htmlFor="cover-image" className="block text-sm font-medium text-muted mb-1.5">
+                Imagem de Capa (opcional)
+              </label>
+              <div className="relative">
+                <input
+                  id="cover-image"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  disabled={isGenerating}
+                  className="hidden"
+                />
+                <label
+                  htmlFor="cover-image"
+                  className="flex items-center justify-center gap-2 w-full rounded-xl border border-dashed border-input-border bg-input-bg px-4 py-3 text-sm text-muted cursor-pointer transition-colors hover:border-primary/50 hover:text-foreground"
+                >
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0022.5 18.75V5.25A2.25 2.25 0 0020.25 3H3.75A2.25 2.25 0 001.5 5.25v13.5A2.25 2.25 0 003.75 21z" />
+                  </svg>
+                  {coverPreview ? 'Trocar imagem' : 'Selecionar imagem'}
+                </label>
+              </div>
+              {coverPreview && (
+                <div className="mt-3 relative">
+                  <img src={coverPreview} alt="Preview" className="w-full h-32 object-cover rounded-lg border border-border" />
+                  <button
+                    type="button"
+                    onClick={() => { setCoverImage(''); setCoverPreview(''); }}
+                    className="absolute top-1 right-1 flex h-6 w-6 items-center justify-center rounded-full bg-error/80 text-white text-xs hover:bg-error transition-colors"
+                  >
+                    ✕
+                  </button>
+                </div>
               )}
             </div>
 
