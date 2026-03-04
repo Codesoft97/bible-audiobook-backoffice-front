@@ -109,6 +109,29 @@ export interface CharacterJourneysResponse {
   data: CharacterJourney[];
 }
 
+// Bible Promise types
+export interface BiblePromise {
+  id: string;
+  book: string;
+  chapter: number;
+  verse: number;
+  promise: string;
+  category: string;
+  isActive?: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BiblePromiseResponse {
+  status: string;
+  data: BiblePromise;
+}
+
+export interface BiblePromisesResponse {
+  status: string;
+  data: BiblePromise[];
+}
+
 // Voice types
 export interface Voice {
   id: string;
