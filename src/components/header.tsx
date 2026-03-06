@@ -13,6 +13,8 @@ export default function Header() {
   const navLinks = [
     { href: '/books', label: 'Livros' },
     { href: '/journeys', label: 'Jornadas' },
+    { href: '/parables', label: 'Parábolas' },
+    { href: '/teachings', label: 'Ensinamentos' },
     { href: '/promises', label: 'Promessas' },
     { href: '/voices', label: 'Vozes' },
   ];

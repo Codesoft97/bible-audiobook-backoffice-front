@@ -109,6 +109,54 @@ export interface CharacterJourneysResponse {
   data: CharacterJourney[];
 }
 
+// Parable types
+export interface Parable {
+  id: string;
+  referencia: string;
+  titulo: string;
+  categoria: string;
+  perfilAlvo: string;
+  duracaoEstimadaMinutos: number;
+  coverImageUrl?: string;
+  isActive?: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ParableResponse {
+  status: string;
+  data: Parable;
+}
+
+export interface ParablesResponse {
+  status: string;
+  data: Parable[];
+}
+
+// Teaching types
+export interface Teaching {
+  id: string;
+  titulo: string;
+  categoria: string;
+  perfilAlvo: string;
+  referencia: string;
+  duracaoEstimadaMinutos: number;
+  coverImageUrl?: string;
+  isActive?: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TeachingResponse {
+  status: string;
+  data: Teaching;
+}
+
+export interface TeachingsResponse {
+  status: string;
+  data: Teaching[];
+}
+
 // Bible Promise types
 export interface BiblePromise {
   id: string;
