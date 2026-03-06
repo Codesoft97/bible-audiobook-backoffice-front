@@ -14,6 +14,7 @@ export default function Header() {
     { href: '/books', label: 'Livros' },
     { href: '/journeys', label: 'Jornadas' },
     { href: '/parables', label: 'Parábolas' },
+    { href: '/teachings', label: 'Ensinamentos' },
     { href: '/promises', label: 'Promessas' },
     { href: '/voices', label: 'Vozes' },
   ];

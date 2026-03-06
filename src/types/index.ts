@@ -133,6 +133,30 @@ export interface ParablesResponse {
   data: Parable[];
 }
 
+// Teaching types
+export interface Teaching {
+  id: string;
+  titulo: string;
+  categoria: string;
+  perfilAlvo: string;
+  referencia: string;
+  duracaoEstimadaMinutos: number;
+  coverImageUrl?: string;
+  isActive?: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TeachingResponse {
+  status: string;
+  data: Teaching;
+}
+
+export interface TeachingsResponse {
+  status: string;
+  data: Teaching[];
+}
+
 // Bible Promise types
 export interface BiblePromise {
   id: string;
