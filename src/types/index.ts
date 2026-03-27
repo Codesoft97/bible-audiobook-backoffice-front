@@ -96,6 +96,7 @@ export interface StreamResponse {
   status: string;
   data: {
     audioUrl: string;
+    oracaoAudioUrl?: string;
   };
 }
 
@@ -178,6 +179,36 @@ export interface BiblePromiseResponse {
 export interface BiblePromisesResponse {
   status: string;
   data: BiblePromise[];
+}
+
+// Daily Devotional types
+export interface DailyDevotional {
+  id: string;
+  titulo: string;
+  mes: string;
+  semana: string;
+  dia: number;
+  assuntoMes: string;
+  assuntoSemana: string;
+  perfilAlvo: string;
+  referencia: string;
+  textoLeitura: string;
+  oracaoLeitura: string;
+  duracaoEstimadaMinutos: number;
+  coverImageUrl?: string;
+  isActive?: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface DailyDevotionalResponse {
+  status: string;
+  data: DailyDevotional;
+}
+
+export interface DailyDevotionalsResponse {
+  status: string;
+  data: DailyDevotional[];
 }
 
 // Voice types
