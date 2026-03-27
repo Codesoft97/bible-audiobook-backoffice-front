@@ -16,6 +16,7 @@ export default function Header() {
     { href: '/parables', label: 'Parábolas' },
     { href: '/teachings', label: 'Ensinamentos' },
     { href: '/promises', label: 'Promessas' },
+    { href: '/devotionals', label: 'Devocionais' },
     { href: '/voices', label: 'Vozes' },
   ];
 

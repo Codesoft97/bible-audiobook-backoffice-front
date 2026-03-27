@@ -7,9 +7,14 @@ import { StreamResponse } from '@/types';
 interface AudioPlayerProps {
   streamEndpoint: string;
   title?: string;
+  responseDataKey?: keyof StreamResponse['data'];
 }
 
-export default function AudioPlayer({ streamEndpoint, title }: AudioPlayerProps) {
+export default function AudioPlayer({
+  streamEndpoint,
+  title,
+  responseDataKey = 'audioUrl',
+}: AudioPlayerProps) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const progressRef = useRef<HTMLDivElement>(null);
 
@@ -69,12 +74,19 @@ export default function AudioPlayer({ streamEndpoint, title }: AudioPlayerProps)
   const fetchStreamUrl = useCallback(async (): Promise<string | null> => {
     try {
       const response = await api.get<StreamResponse>(streamEndpoint);
-      return response.data.data.audioUrl;
+      const streamUrl = response.data.data[responseDataKey];
+
+      if (!streamUrl) {
+        setError('Audio indisponivel para este conteudo');
+        return null;
+      }
+
+      return streamUrl;
     } catch {
       setError('Erro ao obter URL do áudio');
       return null;
     }
-  }, [streamEndpoint]);
+  }, [responseDataKey, streamEndpoint]);
 
   const togglePlay = useCallback(async () => {
     const audio = audioRef.current;
