@@ -231,6 +231,123 @@ export interface VoiceCreateResponse {
   data: Voice;
 }
 
+// Dashboard types
+export type DashboardPlan = 'free' | 'free_trial' | 'paid';
+
+export interface DashboardOverview {
+  totalFamilies: number;
+  totalProfiles: number;
+  planDistribution: Record<DashboardPlan, number>;
+  newRegistrations: {
+    last7Days: number;
+    last30Days: number;
+  };
+  totalWithActivity: number;
+  totalWithoutActivity: number;
+}
+
+export interface DashboardOverviewResponse {
+  status: string;
+  data: DashboardOverview;
+}
+
+export interface DashboardUser {
+  profileId: string;
+  profileName: string;
+  profileType: string;
+  familyId: string;
+  familyName: string;
+  email: string;
+  plan: DashboardPlan;
+  authProvider?: string;
+  registeredAt: string;
+  lastActivityAt: string | null;
+  totalListenings: number;
+  totalDevotionals: number;
+  totalBibleReadings: number;
+}
+
+export interface DashboardInactiveUser {
+  profileId: string;
+  profileName: string;
+  profileType: string;
+  familyId: string;
+  familyName: string;
+  email: string;
+  plan: DashboardPlan;
+  registeredAt: string;
+}
+
+export interface PaginationMeta {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+}
+
+export interface DashboardUsersResponse {
+  status: string;
+  data: {
+    users: DashboardUser[];
+    pagination: PaginationMeta;
+  };
+}
+
+export interface DashboardInactiveUsersResponse {
+  status: string;
+  data: {
+    users: DashboardInactiveUser[];
+    pagination: PaginationMeta;
+  };
+}
+
+export interface DashboardTopContent {
+  contentId: string;
+  contentType: string;
+  totalListens: number;
+  uniqueListeners: number;
+}
+
+export interface DashboardDailyTrend {
+  date: string;
+  total: number;
+}
+
+export interface DashboardContentConsumption {
+  byContentType: Record<string, number>;
+  topContents: DashboardTopContent[];
+  dailyTrend: DashboardDailyTrend[];
+}
+
+export interface DashboardContentConsumptionResponse {
+  status: string;
+  data: DashboardContentConsumption;
+}
+
+export interface DashboardEngagement {
+  activeUsers: {
+    daily: number;
+    weekly: number;
+    monthly: number;
+  };
+  devotionalProgress: {
+    totalStarted: number;
+    totalContentCompleted: number;
+    totalPrayerCompleted: number;
+    completionRate: number;
+  };
+  bibleReading: {
+    totalReaders: number;
+    uniqueBooks: number;
+    avgChaptersPerUser: number;
+  };
+}
+
+export interface DashboardEngagementResponse {
+  status: string;
+  data: DashboardEngagement;
+}
+
 // API Error types
 export interface ApiValidationError {
   field: string;

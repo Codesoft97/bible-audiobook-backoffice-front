@@ -11,6 +11,7 @@ export default function Header() {
   const pathname = usePathname();
 
   const navLinks = [
+    { href: '/dashboard', label: 'Dashboard' },
     { href: '/books', label: 'Livros' },
     { href: '/journeys', label: 'Jornadas' },
     { href: '/parables', label: 'Parábolas' },
